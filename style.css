@@ -2613,3 +2613,134 @@ button.collapsible-header {
   cursor: pointer;
   padding: var(--space-16) var(--space-20);
 }
+/* =========================================================================
+   Print / "Save as PDF"  (P2.7)
+   A print-only layout: hides interactive chrome and renders the plan cleanly
+   on paper. Triggered by the "Save as PDF" button -> window.print().
+   ========================================================================= */
+
+/* Print header is hidden on screen, shown only when printing. */
+.print-header {
+  display: none;
+}
+
+@media print {
+  /* Reset page + colors so the plan reads well on white paper. */
+  @page {
+    margin: 1.5cm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Make browsers honour background colours (calendar swatches, badges). */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything that isn't the plan itself. */
+  .theme-toggle,
+  .header,
+  .footer,
+  #inputSection,
+  .sort-controls,
+  .alternative-plans,
+  .action-buttons,
+  .tips-card,
+  .no-print,
+  .notification,
+  .notifications,
+  #ariaLiveRegion,
+  #modal,
+  .modal {
+    display: none !important;
+  }
+
+  /* Strip screen layout constraints. */
+  .main,
+  .container {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  /* Show the print-only header. */
+  .print-header {
+    display: block !important;
+    margin: 0 0 16px;
+    padding: 0 0 12px;
+    border-bottom: 2px solid #000;
+  }
+
+  .print-title {
+    font-size: 20pt;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: #000 !important;
+  }
+
+  .print-meta {
+    font-size: 10pt;
+    color: #333 !important;
+    margin: 0;
+  }
+
+  /* Flatten cards: no shadows/borders, keep content together across pages. */
+  .card,
+  .results-card,
+  .calendar-card,
+  .summary-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    background: #fff !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .card__header {
+    background: #fff !important;
+  }
+
+  .section-title {
+    color: #000 !important;
+  }
+
+  /* Summary cards in a single tidy row. */
+  .summary-cards {
+    display: flex !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .summary-card {
+    flex: 1 1 0 !important;
+    padding: 8px !important;
+  }
+
+  .summary-card__value {
+    color: #000 !important;
+  }
+
+  /* Each recommended break stays on one page where possible. */
+  #leavePlanList > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Calendar: keep grids intact and legible. */
+  .calendar-month,
+  .calendar-grid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Avoid orphaned links printing long URLs. */
+  a[href]::after {
+    content: "";
+  }
+}

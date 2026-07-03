@@ -178,6 +178,12 @@
 
             <!-- Results Section -->
             <div id="resultsSection" class="hidden fade-in">
+                <!-- Print-only header (shown on paper / PDF, hidden on screen) -->
+                <div class="print-header" aria-hidden="true">
+                    <h1 class="print-title">SmartLeaves — Your Holiday Plan</h1>
+                    <p class="print-meta" id="printMeta"></p>
+                </div>
+
                 <!-- Summary Cards -->
                 <div class="summary-cards">
                     <div class="summary-card">
@@ -260,7 +266,7 @@
                 </div>
 
                 <!-- All Holidays Section -->
-                <div class="card">
+                <div class="card no-print">
                     <button type="button" class="card__header collapsible-header collapsible-trigger" id="holidaysToggle" aria-expanded="false">
                         <h3 class="section-title">View All National Holidays <span id="holidayYear"></span></h3>
                         <span class="toggle-icon" aria-hidden="true">▼</span>
@@ -285,6 +291,7 @@
                     <button class="btn btn--outline" id="exportBtn">📄 Export Plan</button>
                     <button class="btn btn--outline" id="downloadIcsBtn">📅 Download Calendar (.ics)</button>
                     <button class="btn btn--outline" id="shareBtn">📤 Share Plan</button>
+                    <button class="btn btn--outline" id="savePdfBtn">🖨️ Save as PDF</button>
                     <button class="btn btn--secondary" id="resetBtn">🔄 Start Over</button>
                 </div>
             </div>

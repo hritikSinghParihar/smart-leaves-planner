@@ -72,6 +72,8 @@ const tipsList = document.getElementById('tipsList');
 const resetBtn = document.getElementById('resetBtn');
 const exportBtn = document.getElementById('exportBtn');
 const shareBtn = document.getElementById('shareBtn');
+const savePdfBtn = document.getElementById('savePdfBtn');
+const printMetaEl = document.getElementById('printMeta');
 const holidaysToggle = document.getElementById('holidaysToggle');
 const holidaysContent = document.getElementById('holidaysContent');
 const modal = document.getElementById('modal');
@@ -106,6 +108,7 @@ form.addEventListener('submit', handleFormSubmit);
 resetBtn.addEventListener('click', handleReset);
 exportBtn.addEventListener('click', handleExport);
 shareBtn.addEventListener('click', handleWebShare);
+if (savePdfBtn) savePdfBtn.addEventListener('click', handleSavePdf);
 holidaysToggle.addEventListener('click', toggleHolidays);
 modalClose.addEventListener('click', closeModal);
 modalCloseBtn.addEventListener('click', closeModal);
@@ -1282,6 +1285,25 @@ function trapModalFocus(e) {
     e.preventDefault();
     first.focus();
   }
+}
+
+function handleSavePdf() {
+  // Fill the print-only header from the current summary values, then open the
+  // browser's print dialog (user picks "Save as PDF"). No dependencies needed.
+  if (printMetaEl) {
+    const totalDays = totalDaysOffEl ? totalDaysOffEl.textContent : '';
+    const leavesUsed = leaveDaysUsedEl ? leaveDaysUsedEl.textContent : '';
+    const generated = new Date().toLocaleDateString(undefined, {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+    printMetaEl.textContent =
+      `${totalDays} days off using ${leavesUsed} leave days \u00b7 Generated ${generated}`;
+  }
+  const previousTitle = document.title;
+  document.title = 'SmartLeaves Holiday Plan';
+  window.print();
+  // Restore the on-screen title after the (blocking) print dialog closes.
+  document.title = previousTitle;
 }
 
 function handleExport() {
