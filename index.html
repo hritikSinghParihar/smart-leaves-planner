@@ -18,6 +18,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Screen reader announcements -->
+    <div id="ariaLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
     <!-- Dark Mode Toggle -->
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
         <span class="theme-toggle-icon">🌙</span>
@@ -80,10 +83,7 @@
                                 Planning Period
                             </label>
                             <select id="planningPeriod" class="form-control">
-                                <option value="rest_2025">Rest of 2025</option>
-                                <option value="2026" selected>2026</option>
-                                <option value="2027">2027</option>
-                                <option value="next_12">Next 12 months</option>
+                                <!-- Options populated dynamically by app.js -->
                             </select>
                         </div>
 
@@ -112,6 +112,41 @@
                                         <small>Mix of both</small>
                                     </span>
                                 </label>
+                            </div>
+                        </div>
+
+                        <!-- Company Settings (collapsible) -->
+                        <div class="form-group company-settings">
+                            <button type="button" class="collapsible-trigger" id="companySettingsToggle" aria-expanded="false">
+                                <span class="collapsible-trigger-label">🏢 Company Settings</span>
+                                <span class="toggle-icon">▼</span>
+                            </button>
+                            <div class="collapsible-panel hidden" id="companySettingsPanel">
+                                <div class="form-group">
+                                    <label class="form-label" for="weekendPolicy">Weekend Policy</label>
+                                    <select id="weekendPolicy" class="form-control">
+                                        <option value="standard">Saturday &amp; Sunday off (standard)</option>
+                                        <option value="saturday-working">Saturday working, Sunday off</option>
+                                        <option value="alternate-saturdays">2nd &amp; 4th Saturday off</option>
+                                    </select>
+                                    <small class="form-text">Match your company's working Saturday policy</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Custom Company Holidays</label>
+                                    <div class="custom-holiday-form">
+                                        <input type="date" id="customHolidayDate" class="form-control custom-holiday-date">
+                                        <input type="text" id="customHolidayName" class="form-control custom-holiday-name" placeholder="Holiday name" maxlength="100">
+                                        <button type="button" class="btn btn--outline btn--sm" id="addCustomHolidayBtn">Add</button>
+                                    </div>
+                                    <ul class="custom-holiday-list" id="customHolidayList"></ul>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Exclude National Holidays</label>
+                                    <small class="form-text">Uncheck holidays your company does not observe</small>
+                                    <div class="excluded-holidays-list" id="excludedHolidaysList"></div>
+                                </div>
                             </div>
                         </div>
 
@@ -172,23 +207,29 @@
                 <div class="sort-controls" id="sortControls">
                     <label class="sort-label">Sort by:</label>
                     <div class="sort-buttons">
-                        <button class="sort-btn active" data-sort="date">
+                        <button class="sort-btn active" data-sort="date" aria-pressed="true">
                             <span class="sort-icon">📅</span>
                             <span class="sort-text">By Date</span>
                         </button>
-                        <button class="sort-btn" data-sort="value">
+                        <button class="sort-btn" data-sort="value" aria-pressed="false">
                             <span class="sort-icon">⭐</span>
                             <span class="sort-text">Best Value</span>
                         </button>
-                        <button class="sort-btn" data-sort="duration">
+                        <button class="sort-btn" data-sort="duration" aria-pressed="false">
                             <span class="sort-icon">⏰</span>
                             <span class="sort-text">Long Holidays</span>
                         </button>
-                        <button class="sort-btn" data-sort="leaves">
+                        <button class="sort-btn" data-sort="leaves" aria-pressed="false">
                             <span class="sort-icon">🍃</span>
                             <span class="sort-text">Least Leaves</span>
                         </button>
                     </div>
+                </div>
+
+                <!-- Alternative Plans -->
+                <div class="alternative-plans hidden" id="alternativePlans">
+                    <label class="sort-label">Plan alternatives:</label>
+                    <div class="alternative-plan-tabs" id="alternativePlanTabs" role="tablist"></div>
                 </div>
 
                 <!-- Optimal Leave Plan -->
@@ -198,15 +239,32 @@
                     </div>
                     <div class="card__body">
                         <div id="leavePlanList"></div>
+                        <div id="excludedBreaksPanel" class="excluded-breaks hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Calendar View -->
+                <div class="card calendar-card">
+                    <div class="card__header">
+                        <h2 class="section-title">📅 Calendar View</h2>
+                    </div>
+                    <div class="card__body">
+                        <div class="calendar-legend">
+                            <span class="calendar-legend-item"><span class="calendar-legend-swatch calendar-legend-swatch--holiday"></span> Holiday</span>
+                            <span class="calendar-legend-item"><span class="calendar-legend-swatch calendar-legend-swatch--leave"></span> Suggested leave</span>
+                            <span class="calendar-legend-item"><span class="calendar-legend-swatch calendar-legend-swatch--planned"></span> Planned break</span>
+                            <span class="calendar-legend-item"><span class="calendar-legend-swatch calendar-legend-swatch--weekend"></span> Weekend</span>
+                        </div>
+                        <div id="calendarView" class="calendar-view"></div>
                     </div>
                 </div>
 
                 <!-- All Holidays Section -->
                 <div class="card">
-                    <div class="card__header collapsible-header" id="holidaysToggle">
+                    <button type="button" class="card__header collapsible-header collapsible-trigger" id="holidaysToggle" aria-expanded="false">
                         <h3 class="section-title">View All National Holidays <span id="holidayYear"></span></h3>
-                        <span class="toggle-icon">▼</span>
-                    </div>
+                        <span class="toggle-icon" aria-hidden="true">▼</span>
+                    </button>
                     <div class="card__body hidden" id="holidaysContent">
                         <div id="allHolidaysList"></div>
                     </div>
@@ -225,6 +283,7 @@
                 <!-- Action Buttons -->
                 <div class="action-buttons">
                     <button class="btn btn--outline" id="exportBtn">📄 Export Plan</button>
+                    <button class="btn btn--outline" id="downloadIcsBtn">📅 Download Calendar (.ics)</button>
                     <button class="btn btn--outline" id="shareBtn">📤 Share Plan</button>
                     <button class="btn btn--secondary" id="resetBtn">🔄 Start Over</button>
                 </div>
@@ -261,27 +320,30 @@
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2025 Smart Leaves Planner. Made with ❤️ for Indian professionals.</p>
+                <p class="keyboard-shortcuts-hint">Keyboard: <kbd>Esc</kbd> close dialog · <kbd>Ctrl</kbd>+<kbd>K</kbd> focus leave days</p>
             </div>
         </div>
     </footer>
 
     <!-- Modal for Export/Share -->
-    <div id="modal" class="modal hidden">
+    <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Your Holiday Plan</h3>
-                <button class="modal-close" id="modalClose">&times;</button>
+                <button type="button" class="modal-close" id="modalClose" aria-label="Close dialog">&times;</button>
             </div>
             <div class="modal-body">
                 <textarea id="modalText" class="modal-textarea" readonly></textarea>
             </div>
             <div class="modal-footer">
+                <button class="btn btn--outline" id="modalDownloadIcsBtn">📅 Download .ics</button>
+                <button class="btn btn--outline" id="modalShareBtn">📤 Share</button>
                 <button class="btn btn--secondary" id="modalCopyBtn">📋 Copy to Clipboard</button>
                 <button class="btn btn--outline" id="modalCloseBtn">Close</button>
             </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
