@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { holidayData } from '../lib/holidays.js';
+import { holidayData, setHolidayData, deriveDayOfWeek } from '../lib/holidays.js';
+import rawHolidays from '../data/holidays.json';
 import {
   parseDate,
   formatDateISO,
@@ -17,6 +18,10 @@ import {
   opportunityKey,
   generateAlternativePlans,
 } from '../lib/engine.js';
+
+// Populate the shared holiday store from the canonical JSON before any
+// describe block reads holidayData at collection time.
+setHolidayData(rawHolidays);
 
 function referenceToday() {
   return parseDate('2026-07-03');
@@ -346,5 +351,29 @@ describe('alternative plans and lock/exclude (P2.5)', () => {
       excludedKeys: [excludeKey]
     });
     expect(plan.selectedOpportunities.some(o => opportunityKey(o) === excludeKey)).toBe(false);
+  });
+});
+
+describe('holiday data source (P2.6)', () => {
+  it('derives dayOfWeek consistent with the date for every holiday', () => {
+    for (const year of Object.keys(holidayData)) {
+      for (const h of holidayData[year]) {
+        expect(h.dayOfWeek).toBe(deriveDayOfWeek(h.date));
+        expect(parseDate(h.date).getDay()).toBe(h.dayOfWeek);
+      }
+    }
+  });
+
+  it('canonical JSON contains only date and name (no hardcoded dayOfWeek)', () => {
+    for (const year of Object.keys(rawHolidays)) {
+      for (const h of rawHolidays[year]) {
+        expect(Object.keys(h).sort()).toEqual(['date', 'name']);
+      }
+    }
+  });
+
+  it('exposes the expected years', () => {
+    expect(Object.keys(holidayData).map(Number).sort((a, b) => a - b))
+      .toEqual([2025, 2026, 2027, 2028]);
   });
 });

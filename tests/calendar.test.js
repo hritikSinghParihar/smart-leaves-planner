@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { parseDate } from '../lib/engine.js';
 import { buildMonthGrid, buildCalendarData, getMonthsInRange } from '../lib/calendar.js';
-import { holidayData } from '../lib/holidays.js';
+import { holidayData, setHolidayData } from '../lib/holidays.js';
+import rawHolidays from '../data/holidays.json';
+
+setHolidayData(rawHolidays);
 
 describe('calendar view (P2.4)', () => {
   const holidays2026 = holidayData[2026];

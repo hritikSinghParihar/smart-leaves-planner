@@ -14,7 +14,8 @@ import {
   sortOpportunities,
   applyHolidaySettings,
   opportunityKey,
-  generateAlternativePlans
+  generateAlternativePlans,
+  loadHolidayData
 } from './lib/engine.js';
 import { downloadICS, generateICS } from './lib/ics.js';
 import { buildShareURL, parseShareURL, sharePlan } from './lib/share.js';
@@ -826,7 +827,15 @@ function handleReset() {
 }
 
 // Initialize App
-function initializeApp() {
+async function initializeApp() {
+  try {
+    await loadHolidayData();
+  } catch (err) {
+    console.error('Could not load holiday data:', err);
+    showNotification('Could not load holiday data. Please refresh the page.', 'error');
+    return;
+  }
+
   populatePeriodDropdown();
   loadCompanySettings();
   applyURLParams();
