@@ -11,7 +11,7 @@ SmartLeaves helps you plan your holidays efficiently. Enter your available leave
 ## Features
 
 - ✨ Smart leave optimization for maximum vacation days
-- 📅 Indian national holidays for 2025, 2026, and 2027
+- 📅 Indian national holidays for 2025–2028
 - 🔄 Sort results by date, best value, duration, or leaves required
 - 🌙 Dark mode support
 - 📱 Works on mobile, tablet, and desktop
@@ -31,18 +31,29 @@ SmartLeaves helps you plan your holidays efficiently. Enter your available leave
 Just visit: [https://smartleaves.in/](https://smartleaves.in/)
 
 ### Run Locally
+The app uses ES modules (`import` in `app.js`). Browsers only load those over **http://** or **https://** — not when you double-click `index.html` (`file://`).
+
 ```bash
-git clone https://github.com/yourusername/smartleaves.git
-cd smartleaves
-# Open index.html in your browser
+git clone https://github.com/hritikSinghParihar/smart-leaves-planner.git
+cd smart-leaves-planner
+npx serve .
+# open the URL shown (e.g. http://localhost:3000)
 ```
+
+### Deploy (Netlify)
+No build step. Connect the repo in Netlify with **publish directory** set to `.` (repo root), or use the included `netlify.toml`. [smartleaves.in](https://smartleaves.in/) is hosted this way — visiting the site URL loads the full app.
+
+Other static hosts (GitHub Pages, etc.) work the same way: serve these files over HTTPS:- `index.html`, `app.js`, `style.css`
+- `lib/` (`engine.js`, `holidays.js`, `ics.js`, `share.js`, `calendar.js`)
+
+`node_modules/` is only for running tests locally — it is not required in production.
 
 ## Technology
 
 - HTML5
 - CSS3
-- JavaScript (vanilla)
-- No frameworks or dependencies
+- JavaScript (vanilla ES modules)
+- No runtime dependencies; Vitest for tests only
 
 ## Contributing
 
@@ -50,7 +61,7 @@ Found a bug or have a suggestion? Open an [issue](https://github.com/hritiksingh
 
 ## Author
 
-**Your Name**
+**Hritik Singh Parihar**
 - GitHub: [@hritiksinghparihar](https://github.com/hritiksinghparihar)
 
 ## License
