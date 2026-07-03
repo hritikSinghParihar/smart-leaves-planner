@@ -1,61 +1,24 @@
-// Holiday Data
-const holidayData = {
-  2025: [
-    { date: "2025-01-26", name: "Republic Day", dayOfWeek: 0 },
-    { date: "2025-02-26", name: "Maha Shivaratri", dayOfWeek: 3 },
-    { date: "2025-03-14", name: "Holi", dayOfWeek: 5 },
-    { date: "2025-03-31", name: "Ramzan Id", dayOfWeek: 1 },
-    { date: "2025-04-10", name: "Mahavir Jayanti", dayOfWeek: 4 },
-    { date: "2025-04-18", name: "Good Friday", dayOfWeek: 5 },
-    { date: "2025-05-12", name: "Buddha Purnima", dayOfWeek: 1 },
-    { date: "2025-06-07", name: "Bakrid", dayOfWeek: 6 },
-    { date: "2025-07-06", name: "Muharram", dayOfWeek: 0 },
-    { date: "2025-08-15", name: "Independence Day", dayOfWeek: 5 },
-    { date: "2025-08-16", name: "Janmashtami", dayOfWeek: 6 },
-    { date: "2025-09-05", name: "Milad un-Nabi", dayOfWeek: 5 },
-    { date: "2025-10-02", name: "Gandhi Jayanti", dayOfWeek: 4 },
-    { date: "2025-10-20", name: "Diwali", dayOfWeek: 1 },
-    { date: "2025-11-05", name: "Guru Nanak Jayanti", dayOfWeek: 3 },
-    { date: "2025-12-25", name: "Christmas", dayOfWeek: 4 }
-  ],
-  2026: [
-    { date: "2026-01-26", name: "Republic Day", dayOfWeek: 1 },
-    { date: "2026-03-04", name: "Holi", dayOfWeek: 3 },
-    { date: "2026-03-21", name: "Ramzan Id", dayOfWeek: 6 },
-    { date: "2026-03-26", name: "Rama Navami", dayOfWeek: 4 },
-    { date: "2026-03-31", name: "Mahavir Jayanti", dayOfWeek: 2 },
-    { date: "2026-04-03", name: "Good Friday", dayOfWeek: 5 },
-    { date: "2026-05-01", name: "Buddha Purnima", dayOfWeek: 5 },
-    { date: "2026-05-28", name: "Bakrid", dayOfWeek: 4 },
-    { date: "2026-06-26", name: "Muharram", dayOfWeek: 5 },
-    { date: "2026-08-15", name: "Independence Day", dayOfWeek: 6 },
-    { date: "2026-08-26", name: "Milad un-Nabi", dayOfWeek: 3 },
-    { date: "2026-09-04", name: "Janmashtami", dayOfWeek: 5 },
-    { date: "2026-10-02", name: "Gandhi Jayanti", dayOfWeek: 5 },
-    { date: "2026-10-20", name: "Dussehra", dayOfWeek: 2 },
-    { date: "2026-11-08", name: "Diwali", dayOfWeek: 0 },
-    { date: "2026-11-24", name: "Guru Nanak Jayanti", dayOfWeek: 2 },
-    { date: "2026-12-25", name: "Christmas", dayOfWeek: 5 }
-  ],
-  2027: [
-    { date: "2027-01-26", name: "Republic Day", dayOfWeek: 2 },
-    { date: "2027-03-10", name: "Ramzan Id", dayOfWeek: 3 },
-    { date: "2027-03-17", name: "Holi", dayOfWeek: 3 },
-    { date: "2027-04-02", name: "Good Friday", dayOfWeek: 5 },
-    { date: "2027-04-21", name: "Mahavir Jayanti", dayOfWeek: 3 },
-    { date: "2027-05-17", name: "Bakrid", dayOfWeek: 1 },
-    { date: "2027-05-26", name: "Buddha Purnima", dayOfWeek: 3 },
-    { date: "2027-06-16", name: "Muharram", dayOfWeek: 3 },
-    { date: "2027-08-15", name: "Independence Day", dayOfWeek: 0 },
-    { date: "2027-08-16", name: "Milad un-Nabi", dayOfWeek: 1 },
-    { date: "2027-08-25", name: "Janmashtami", dayOfWeek: 3 },
-    { date: "2027-10-02", name: "Gandhi Jayanti", dayOfWeek: 6 },
-    { date: "2027-10-09", name: "Dussehra", dayOfWeek: 6 },
-    { date: "2027-10-29", name: "Diwali", dayOfWeek: 5 },
-    { date: "2027-11-15", name: "Guru Nanak Jayanti", dayOfWeek: 1 },
-    { date: "2027-12-25", name: "Christmas", dayOfWeek: 6 }
-  ]
-};
+import {
+  parseDate,
+  formatDate,
+  formatDateISO,
+  getAvailableYears,
+  getPeriodLabel,
+  addDays,
+  getDatesBetween,
+  isWeekend,
+  isHoliday,
+  getHolidaysForPeriod,
+  calculateLeaveOpportunities,
+  selectOptimalPlan,
+  sortOpportunities,
+  applyHolidaySettings,
+  opportunityKey,
+  generateAlternativePlans
+} from './lib/engine.js';
+import { downloadICS, generateICS } from './lib/ics.js';
+import { buildShareURL, parseShareURL, sharePlan } from './lib/share.js';
+import { buildCalendarData } from './lib/calendar.js';
 
 const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -72,12 +35,23 @@ const tips = [
 
 // Global state
 let currentPlan = null;
+let allOpportunities = [];
+let lockedOpportunities = [];
+let excludedKeys = new Set();
+let alternativePlans = [];
+let selectedAlternativeIndex = 0;
 let currentSortType = 'date';
 let isDarkMode = false;
 let userPreferences = {
   theme: 'light',
   sortPreference: 'date',
   lastCalculation: null
+};
+
+let companySettings = {
+  weekendPolicy: 'standard',
+  addedHolidays: [],
+  excludedDates: []
 };
 
 // DOM Elements
@@ -105,19 +79,50 @@ const modalCloseBtn = document.getElementById('modalCloseBtn');
 const modalTitle = document.getElementById('modalTitle');
 const modalText = document.getElementById('modalText');
 const modalCopyBtn = document.getElementById('modalCopyBtn');
+const modalDownloadIcsBtn = document.getElementById('modalDownloadIcsBtn');
+const modalShareBtn = document.getElementById('modalShareBtn');
 const sortControls = document.getElementById('sortControls');
 const sortButtons = document.querySelectorAll('.sort-btn');
+const downloadIcsBtn = document.getElementById('downloadIcsBtn');
+const companySettingsToggle = document.getElementById('companySettingsToggle');
+const companySettingsPanel = document.getElementById('companySettingsPanel');
+const weekendPolicySelect = document.getElementById('weekendPolicy');
+const customHolidayDate = document.getElementById('customHolidayDate');
+const customHolidayName = document.getElementById('customHolidayName');
+const addCustomHolidayBtn = document.getElementById('addCustomHolidayBtn');
+const customHolidayList = document.getElementById('customHolidayList');
+const excludedHolidaysList = document.getElementById('excludedHolidaysList');
+const alternativePlansEl = document.getElementById('alternativePlans');
+const alternativePlanTabs = document.getElementById('alternativePlanTabs');
+const calendarView = document.getElementById('calendarView');
+const ariaLiveRegion = document.getElementById('ariaLiveRegion');
+const excludedBreaksPanel = document.getElementById('excludedBreaksPanel');
+
+let modalPreviousFocus = null;
 
 // Event Listeners
 form.addEventListener('submit', handleFormSubmit);
 resetBtn.addEventListener('click', handleReset);
 exportBtn.addEventListener('click', handleExport);
-shareBtn.addEventListener('click', handleShare);
+shareBtn.addEventListener('click', handleWebShare);
 holidaysToggle.addEventListener('click', toggleHolidays);
 modalClose.addEventListener('click', closeModal);
 modalCloseBtn.addEventListener('click', closeModal);
 modalCopyBtn.addEventListener('click', copyToClipboard);
+if (modalDownloadIcsBtn) modalDownloadIcsBtn.addEventListener('click', handleDownloadICS);
+if (modalShareBtn) modalShareBtn.addEventListener('click', handleWebShare);
+if (downloadIcsBtn) downloadIcsBtn.addEventListener('click', handleDownloadICS);
 themeToggle.addEventListener('click', toggleTheme);
+
+if (companySettingsToggle) {
+  companySettingsToggle.addEventListener('click', toggleCompanySettings);
+}
+if (addCustomHolidayBtn) {
+  addCustomHolidayBtn.addEventListener('click', handleAddCustomHoliday);
+}
+if (weekendPolicySelect) {
+  weekendPolicySelect.addEventListener('change', handleWeekendPolicyChange);
+}
 
 // Sort button listeners
 sortButtons.forEach(btn => {
@@ -130,20 +135,47 @@ sortButtons.forEach(btn => {
 // Initialize
 document.addEventListener('DOMContentLoaded', initializeApp);
 
+// DOM helpers (S2 — safe DOM APIs, no innerHTML for dynamic content)
+function clearElement(el) {
+  el.replaceChildren();
+}
+
+function createEmptyMessage(text) {
+  const p = document.createElement('p');
+  p.className = 'empty-message';
+  p.textContent = text;
+  return p;
+}
+
+function createBadge(className, text) {
+  const span = document.createElement('span');
+  span.className = `badge ${className}`;
+  span.textContent = text;
+  return span;
+}
+
+function createVisualBarSegment(className, flex, title, label) {
+  const seg = document.createElement('div');
+  seg.className = `visual-bar-segment ${className}`;
+  seg.style.flex = String(flex);
+  seg.title = title;
+  seg.textContent = label;
+  return seg;
+}
+
 // Sort Functions
 function handleSortChange(sortType) {
   if (!currentPlan || sortType === currentSortType) return;
   
   currentSortType = sortType;
   userPreferences.sortPreference = sortType;
+  savePreference('sortPreference', sortType);
   
   // Update active button
   sortButtons.forEach(btn => {
-    if (btn.getAttribute('data-sort') === sortType) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
+    const isActive = btn.getAttribute('data-sort') === sortType;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
   });
   
   // Sort and re-render
@@ -161,34 +193,6 @@ function getSortLabel(sortType) {
   return labels[sortType] || 'Date';
 }
 
-function sortOpportunities(opportunities, sortType) {
-  const sorted = [...opportunities];
-  
-  switch(sortType) {
-    case 'date':
-      sorted.sort((a, b) => a.startDate - b.startDate);
-      break;
-    case 'value':
-      // Separate leave-requiring holidays from natural weekends
-      const requiresLeaves = sorted.filter(opp => opp.leaveDaysNeeded > 0);
-      const noLeaves = sorted.filter(opp => opp.leaveDaysNeeded === 0);
-      
-      // Sort leave-requiring holidays by efficiency (descending)
-      requiresLeaves.sort((a, b) => b.efficiency - a.efficiency);
-      
-      // Prioritize leave-requiring holidays, then natural weekends
-      return [...requiresLeaves, ...noLeaves];
-    case 'duration':
-      sorted.sort((a, b) => b.totalDays - a.totalDays);
-      break;
-    case 'leaves':
-      sorted.sort((a, b) => a.leaveDaysNeeded - b.leaveDaysNeeded);
-      break;
-  }
-  
-  return sorted;
-}
-
 function sortAndDisplayResults(plan, sortType) {
   // Add fade out animation
   leavePlanList.style.opacity = '0';
@@ -199,7 +203,7 @@ function sortAndDisplayResults(plan, sortType) {
     const sortedOpportunities = sortOpportunities(plan.selectedOpportunities, sortType);
     
     // Clear and re-render
-    leavePlanList.innerHTML = '';
+    clearElement(leavePlanList);
     sortedOpportunities.forEach((opp, index) => {
       const item = createLeavePlanItem(opp, index, plan.availableLeaves);
       leavePlanList.appendChild(item);
@@ -213,292 +217,45 @@ function sortAndDisplayResults(plan, sortType) {
   }, 200);
 }
 
-// Helper Functions
-function parseDate(dateStr) {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
+function populatePeriodDropdown() {
+  const select = document.getElementById('planningPeriod');
+  if (!select) return;
 
-function formatDate(date) {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-}
+  const today = new Date();
+  const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const currentYear = todayNormalized.getFullYear();
+  const currentMonth = todayNormalized.getMonth();
+  const years = getAvailableYears();
 
-function formatDateShort(date) {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${date.getDate()} ${months[date.getMonth()]}`;
-}
+  select.replaceChildren();
 
-function addDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function getDatesBetween(startDate, endDate) {
-  const dates = [];
-  let currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
-    dates.push(new Date(currentDate));
-    currentDate = addDays(currentDate, 1);
-  }
-  return dates;
-}
-
-function isWeekend(date) {
-  const day = date.getDay();
-  return day === 0 || day === 6;
-}
-
-function isHoliday(date, holidays) {
-  const dateStr = date.toISOString().split('T')[0];
-  return holidays.some(h => h.date === dateStr);
-}
-
-function getHolidaysForPeriod(period) {
-  const today = new Date(2025, 9, 27); // Oct 27, 2025
-  let startDate, endDate, holidays = [];
-
-  if (period === 'rest_2025') {
-    startDate = today;
-    endDate = new Date(2025, 11, 31);
-    holidays = holidayData[2025].filter(h => parseDate(h.date) >= startDate);
-  } else if (period === '2026') {
-    startDate = new Date(2026, 0, 1);
-    endDate = new Date(2026, 11, 31);
-    holidays = holidayData[2026];
-  } else if (period === '2027') {
-    startDate = new Date(2027, 0, 1);
-    endDate = new Date(2027, 11, 31);
-    holidays = holidayData[2027];
-  } else if (period === 'next_12') {
-    startDate = today;
-    endDate = addDays(today, 365);
-    // Get holidays from 2025, 2026, and potentially 2027
-    holidays = [
-      ...holidayData[2025].filter(h => parseDate(h.date) >= startDate),
-      ...holidayData[2026],
-      ...holidayData[2027].filter(h => parseDate(h.date) <= endDate)
-    ].filter(h => {
-      const hDate = parseDate(h.date);
-      return hDate >= startDate && hDate <= endDate;
-    });
+  if (currentMonth < 10) {
+    const restOpt = document.createElement('option');
+    restOpt.value = `rest_${currentYear}`;
+    restOpt.textContent = `Rest of ${currentYear}`;
+    select.appendChild(restOpt);
   }
 
-  return { startDate, endDate, holidays };
-}
-
-function calculateLeaveOpportunities(holidays, availableLeaves, preference) {
-  const opportunities = [];
-
-  holidays.forEach((holiday, index) => {
-    const holidayDate = parseDate(holiday.date);
-    const dayOfWeek = holiday.dayOfWeek;
-
-    // Check for consecutive holidays
-    let consecutiveHolidays = [holiday];
-    for (let i = index + 1; i < holidays.length; i++) {
-      const nextHoliday = holidays[i];
-      const nextDate = parseDate(nextHoliday.date);
-      const daysDiff = (nextDate - parseDate(consecutiveHolidays[consecutiveHolidays.length - 1].date)) / (1000 * 60 * 60 * 24);
-      
-      if (daysDiff <= 5) {
-        consecutiveHolidays.push(nextHoliday);
-      } else {
-        break;
-      }
-    }
-
-    // If multiple consecutive holidays, calculate bridge
-    if (consecutiveHolidays.length > 1) {
-      const firstDate = parseDate(consecutiveHolidays[0].date);
-      const lastDate = parseDate(consecutiveHolidays[consecutiveHolidays.length - 1].date);
-      
-      // Extend to include surrounding weekends
-      let startDate = new Date(firstDate);
-      let endDate = new Date(lastDate);
-      
-      // Extend backwards to include previous weekend
-      while (startDate.getDay() !== 1 && startDate.getDay() !== 0) {
-        startDate = addDays(startDate, -1);
-      }
-      if (startDate.getDay() === 1) {
-        startDate = addDays(startDate, -2);
-      }
-      
-      // Extend forwards to include next weekend
-      while (endDate.getDay() !== 0 && endDate.getDay() !== 6) {
-        endDate = addDays(endDate, 1);
-      }
-      if (endDate.getDay() === 6) {
-        endDate = addDays(endDate, 1);
-      }
-      
-      const allDates = getDatesBetween(startDate, endDate);
-      const leaveDaysNeeded = allDates.filter(d => !isWeekend(d) && !isHoliday(d, holidays)).length;
-      const totalDays = allDates.length;
-      
-      if (leaveDaysNeeded <= availableLeaves) {
-        opportunities.push({
-          startDate,
-          endDate,
-          totalDays,
-          leaveDaysNeeded,
-          holidaysIncluded: consecutiveHolidays,
-          efficiency: totalDays / (leaveDaysNeeded || 1),
-          type: totalDays >= 7 ? 'long' : 'weekend'
-        });
-      }
-    }
-
-    // Single holiday opportunities
-    if (dayOfWeek === 5) { // Friday
-      // Natural 3-day weekend
-      const startDate = new Date(holidayDate);
-      const endDate = addDays(holidayDate, 2); // Fri-Sat-Sun
-      opportunities.push({
-        startDate,
-        endDate,
-        totalDays: 3,
-        leaveDaysNeeded: 0,
-        holidaysIncluded: [holiday],
-        efficiency: Infinity,
-        type: 'weekend'
-      });
-    } else if (dayOfWeek === 1) { // Monday
-      // Natural 3-day weekend
-      const startDate = addDays(holidayDate, -2); // Sat-Sun-Mon
-      const endDate = new Date(holidayDate);
-      opportunities.push({
-        startDate,
-        endDate,
-        totalDays: 3,
-        leaveDaysNeeded: 0,
-        holidaysIncluded: [holiday],
-        efficiency: Infinity,
-        type: 'weekend'
-      });
-    } else if (dayOfWeek === 4) { // Thursday
-      // Take Friday off for 4-day weekend
-      if (availableLeaves >= 1) {
-        const startDate = new Date(holidayDate);
-        const endDate = addDays(holidayDate, 3); // Thu-Fri-Sat-Sun
-        opportunities.push({
-          startDate,
-          endDate,
-          totalDays: 4,
-          leaveDaysNeeded: 1,
-          holidaysIncluded: [holiday],
-          efficiency: 4,
-          type: 'weekend'
-        });
-      }
-    } else if (dayOfWeek === 2) { // Tuesday
-      // Take Monday off for 4-day weekend
-      if (availableLeaves >= 1) {
-        const startDate = addDays(holidayDate, -3); // Sat-Sun-Mon-Tue
-        const endDate = new Date(holidayDate);
-        opportunities.push({
-          startDate,
-          endDate,
-          totalDays: 4,
-          leaveDaysNeeded: 1,
-          holidaysIncluded: [holiday],
-          efficiency: 4,
-          type: 'weekend'
-        });
-      }
-    } else if (dayOfWeek === 3) { // Wednesday
-      // Option 1: Take Mon-Tue off for 5-day break
-      if (availableLeaves >= 2) {
-        const startDate = addDays(holidayDate, -4); // Sat-Sun-Mon-Tue-Wed
-        const endDate = new Date(holidayDate);
-        opportunities.push({
-          startDate,
-          endDate,
-          totalDays: 5,
-          leaveDaysNeeded: 2,
-          holidaysIncluded: [holiday],
-          efficiency: 2.5,
-          type: 'weekend'
-        });
-      }
-      // Option 2: Take Thu-Fri off for 5-day break
-      if (availableLeaves >= 2) {
-        const startDate = new Date(holidayDate);
-        const endDate = addDays(holidayDate, 4); // Wed-Thu-Fri-Sat-Sun
-        opportunities.push({
-          startDate,
-          endDate,
-          totalDays: 5,
-          leaveDaysNeeded: 2,
-          holidaysIncluded: [holiday],
-          efficiency: 2.5,
-          type: 'weekend'
-        });
-      }
+  years.forEach(year => {
+    if (year >= currentYear) {
+      const opt = document.createElement('option');
+      opt.value = String(year);
+      opt.textContent = String(year);
+      select.appendChild(opt);
     }
   });
 
-  // Remove duplicate opportunities (same date range)
-  const uniqueOpportunities = [];
-  const seen = new Set();
-  
-  opportunities.forEach(opp => {
-    const key = `${opp.startDate.toISOString()}-${opp.endDate.toISOString()}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      uniqueOpportunities.push(opp);
-    }
-  });
+  const next12Opt = document.createElement('option');
+  next12Opt.value = 'next_12';
+  next12Opt.textContent = 'Next 12 months';
+  select.appendChild(next12Opt);
 
-  return uniqueOpportunities;
-}
-
-function selectOptimalPlan(opportunities, availableLeaves, preference) {
-  let selectedOpportunities = [];
-  let remainingLeaves = availableLeaves;
-  let sortedOpportunities;
-
-  if (preference === 'long') {
-    // Maximize long breaks - sort by total days descending
-    sortedOpportunities = [...opportunities].sort((a, b) => b.totalDays - a.totalDays);
-  } else if (preference === 'trips') {
-    // Maximize number of trips - sort by efficiency (best value first)
-    sortedOpportunities = [...opportunities].sort((a, b) => b.efficiency - a.efficiency);
+  if (years.includes(currentYear)) {
+    select.value = String(currentYear);
   } else {
-    // Balanced - weighted score
-    sortedOpportunities = [...opportunities].sort((a, b) => {
-      const scoreA = a.totalDays * 0.6 + a.efficiency * 0.4;
-      const scoreB = b.totalDays * 0.6 + b.efficiency * 0.4;
-      return scoreB - scoreA;
-    });
+    const nextYear = years.find(y => y > currentYear);
+    select.value = nextYear ? String(nextYear) : 'next_12';
   }
-
-  // Select non-overlapping opportunities
-  sortedOpportunities.forEach(opp => {
-    if (opp.leaveDaysNeeded <= remainingLeaves) {
-      // Check for overlap with already selected opportunities
-      const hasOverlap = selectedOpportunities.some(selected => {
-        return !(opp.endDate < selected.startDate || opp.startDate > selected.endDate);
-      });
-
-      if (!hasOverlap) {
-        selectedOpportunities.push(opp);
-        remainingLeaves -= opp.leaveDaysNeeded;
-      }
-    }
-  });
-
-  // Sort chronologically
-  selectedOpportunities.sort((a, b) => a.startDate - b.startDate);
-
-  return {
-    selectedOpportunities,
-    totalLeavesUsed: availableLeaves - remainingLeaves,
-    totalDaysOff: selectedOpportunities.reduce((sum, opp) => sum + opp.totalDays, 0),
-    remainingLeaves
-  };
 }
 
 function handleFormSubmit(e) {
@@ -525,22 +282,32 @@ function handleFormSubmit(e) {
     setTimeout(() => {
       try {
         // Get holidays for selected period
-        const { startDate, endDate, holidays } = getHolidaysForPeriod(planningPeriod);
+        const { startDate, endDate, holidays: baseHolidays, dataTruncated, lastAvailableDate } = getHolidaysForPeriod(planningPeriod);
+        const holidays = applyHolidaySettings(baseHolidays, companySettings);
 
-        // Calculate opportunities
-        const opportunities = calculateLeaveOpportunities(holidays, leaveDays, preference);
+        const opportunities = calculateLeaveOpportunities(holidays, leaveDays, preference, companySettings.weekendPolicy);
 
-        // Select optimal plan
+        allOpportunities = opportunities;
+        lockedOpportunities = [];
+        excludedKeys = new Set();
+        alternativePlans = generateAlternativePlans(opportunities, leaveDays, preference);
+
         currentPlan = selectOptimalPlan(opportunities, leaveDays, preference);
         currentPlan.holidays = holidays;
         currentPlan.period = planningPeriod;
         currentPlan.availableLeaves = leaveDays;
+        currentPlan.preference = preference;
+        currentPlan.dataTruncated = dataTruncated;
+        currentPlan.lastAvailableDate = lastAvailableDate;
+        currentPlan.startDate = startDate;
+        currentPlan.endDate = endDate;
+        selectedAlternativeIndex = 0;
 
-        // Save preferences
         userPreferences.lastCalculation = {
           leaveDays,
           planningPeriod,
           preference,
+          weekendPolicy: companySettings.weekendPolicy,
           timestamp: new Date().toISOString()
         };
 
@@ -553,7 +320,14 @@ function handleFormSubmit(e) {
           resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
 
-        showNotification('Holiday plan generated successfully!', 'success');
+        if (dataTruncated) {
+          showNotification(
+            `Holiday data only available through ${formatDate(lastAvailableDate)}. Some dates in your window may be missing.`,
+            'warning'
+          );
+        } else {
+          showNotification('Holiday plan generated successfully!', 'success');
+        }
       } catch (error) {
         hideLoadingState();
         showNotification('Error calculating holiday plan. Please try again.', 'error');
@@ -574,9 +348,11 @@ function displayResults(plan) {
   leaveRemainingEl.textContent = plan.remainingLeaves;
 
   // Display leave plan
-  leavePlanList.innerHTML = '';
+  clearElement(leavePlanList);
   if (plan.selectedOpportunities.length === 0) {
-    leavePlanList.innerHTML = '<p style="text-align: center; color: var(--color-text-secondary); padding: var(--space-32);">No optimal leave opportunities found for your criteria. Try adjusting your available leaves or preference.</p>';
+    leavePlanList.appendChild(createEmptyMessage(
+      'No optimal leave opportunities found for your criteria. Try adjusting your available leaves or preference.'
+    ));
   } else {
     plan.selectedOpportunities.forEach((opp, index) => {
       const item = createLeavePlanItem(opp, index, plan.availableLeaves);
@@ -585,24 +361,20 @@ function displayResults(plan) {
   }
 
   // Display all holidays
-  const yearText = plan.period === 'rest_2025' ? '(Rest of 2025)' : 
-                   plan.period === 'next_12' ? '(Next 12 Months)' : 
-                   `(${plan.period})`;
-  holidayYearEl.textContent = yearText;
+  holidayYearEl.textContent = getPeriodLabel(plan.period);
   
-  allHolidaysList.innerHTML = '';
+  clearElement(allHolidaysList);
   const holidayListDiv = document.createElement('div');
   holidayListDiv.className = 'holiday-list';
-  
+
   plan.holidays.forEach(holiday => {
     const item = createHolidayItem(holiday);
     holidayListDiv.appendChild(item);
   });
-  
+
   allHolidaysList.appendChild(holidayListDiv);
 
-  // Display tips
-  tipsList.innerHTML = '';
+  clearElement(tipsList);
   tips.forEach(tip => {
     const li = document.createElement('li');
     li.textContent = tip;
@@ -615,13 +387,58 @@ function displayResults(plan) {
   // Show sort controls and set active button
   if (sortControls) {
     sortButtons.forEach(btn => {
-      if (btn.getAttribute('data-sort') === currentSortType) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
+      const isActive = btn.getAttribute('data-sort') === currentSortType;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', String(isActive));
     });
   }
+
+  renderAlternativePlans();
+  renderCalendarView(plan);
+  renderExcludedBreaks();
+}
+
+function renderExcludedBreaks() {
+  if (!excludedBreaksPanel) return;
+
+  if (excludedKeys.size === 0) {
+    excludedBreaksPanel.classList.add('hidden');
+    clearElement(excludedBreaksPanel);
+    return;
+  }
+
+  excludedBreaksPanel.classList.remove('hidden');
+  clearElement(excludedBreaksPanel);
+
+  const heading = document.createElement('h4');
+  heading.className = 'excluded-breaks-title';
+  heading.textContent = `Excluded breaks (${excludedKeys.size})`;
+  excludedBreaksPanel.appendChild(heading);
+
+  const list = document.createElement('div');
+  list.className = 'excluded-breaks-list';
+
+  allOpportunities
+    .filter(opp => excludedKeys.has(opportunityKey(opp)))
+    .forEach(opp => {
+      const item = document.createElement('div');
+      item.className = 'excluded-break-item';
+
+      const label = document.createElement('span');
+      label.textContent = `${formatDate(opp.startDate)} – ${formatDate(opp.endDate)} (${opp.totalDays} days)`;
+
+      const restoreBtn = document.createElement('button');
+      restoreBtn.type = 'button';
+      restoreBtn.className = 'btn btn--outline btn--sm';
+      restoreBtn.textContent = '↩️ Restore';
+      restoreBtn.addEventListener('click', () => handleExcludeToggle(opp));
+
+      item.appendChild(label);
+      item.appendChild(restoreBtn);
+      list.appendChild(item);
+    });
+
+  excludedBreaksPanel.appendChild(list);
 }
 
 function createLeavePlanItem(opportunity, index, totalLeaves) {
@@ -630,61 +447,134 @@ function createLeavePlanItem(opportunity, index, totalLeaves) {
 
   const dateRange = `${formatDate(opportunity.startDate)} - ${formatDate(opportunity.endDate)}`;
   const duration = `${opportunity.totalDays} consecutive days`;
-  
-  let badge = '';
+
+  const header = document.createElement('div');
+  header.className = 'leave-plan-header';
+
+  const datesBlock = document.createElement('div');
+  datesBlock.className = 'leave-plan-dates';
+  const dateRangeEl = document.createElement('div');
+  dateRangeEl.className = 'leave-plan-date-range';
+  dateRangeEl.textContent = dateRange;
+  const durationEl = document.createElement('div');
+  durationEl.className = 'leave-plan-duration';
+  durationEl.textContent = duration;
+  datesBlock.appendChild(dateRangeEl);
+  datesBlock.appendChild(durationEl);
+
+  const badgesBlock = document.createElement('div');
+  badgesBlock.className = 'leave-plan-badges';
   if (opportunity.leaveDaysNeeded === 0) {
-    badge = '<span class="badge badge--value">🎁 Natural Long Weekend</span>';
+    badgesBlock.appendChild(createBadge('badge--value', '🎁 Natural Long Weekend'));
   } else if (opportunity.totalDays >= 7) {
-    badge = '<span class="badge badge--long">🌟 Week-Long Break</span>';
+    badgesBlock.appendChild(createBadge('badge--long', '🌟 Week-Long Break'));
   } else if (opportunity.efficiency >= 3.5) {
-    badge = '<span class="badge badge--value">💎 Best Value</span>';
+    badgesBlock.appendChild(createBadge('badge--value', '💎 Best Value'));
   } else {
-    badge = '<span class="badge badge--weekend">🏖️ Long Weekend</span>';
+    badgesBlock.appendChild(createBadge('badge--weekend', '🏖️ Long Weekend'));
   }
 
-  const holidayNames = opportunity.holidaysIncluded.map(h => h.name).join(', ');
-  
-  // Calculate breakdown
-  const allDates = getDatesBetween(opportunity.startDate, opportunity.endDate);
-  const leaveDays = opportunity.leaveDaysNeeded; // Use the actual leave requirement
-  const holidayDays = opportunity.holidaysIncluded.length;
-  const weekendDays = allDates.filter(d => isWeekend(d)).length;
+  header.appendChild(datesBlock);
+  header.appendChild(badgesBlock);
 
-  // Create visual bar
+  const holidayNames = opportunity.holidaysIncluded.map(h => h.name).join(', ');
+  const allDates = getDatesBetween(opportunity.startDate, opportunity.endDate);
+  const leaveDays = opportunity.leaveDaysNeeded;
+  const holidayDays = opportunity.holidaysIncluded.length;
+  const weekendDays = allDates.filter(d => isWeekend(d, companySettings.weekendPolicy)).length;
+
+  const details = document.createElement('div');
+  details.className = 'leave-plan-details';
+
+  const leaveDetail = document.createElement('div');
+  leaveDetail.className = 'leave-plan-detail';
+  const leaveLabel = document.createElement('div');
+  leaveLabel.className = 'leave-plan-detail-label';
+  leaveLabel.textContent = 'Leave Required';
+  const leaveValue = document.createElement('div');
+  leaveValue.className = 'leave-plan-detail-value';
+  const leaveStrong = document.createElement('strong');
+  leaveStrong.textContent = String(opportunity.leaveDaysNeeded);
+  leaveValue.appendChild(leaveStrong);
+  leaveValue.appendChild(document.createTextNode(' days'));
+  leaveDetail.appendChild(leaveLabel);
+  leaveDetail.appendChild(leaveValue);
+
+  const holidayDetail = document.createElement('div');
+  holidayDetail.className = 'leave-plan-detail';
+  const holidayLabel = document.createElement('div');
+  holidayLabel.className = 'leave-plan-detail-label';
+  holidayLabel.textContent = 'Holidays Included';
+  const holidayValue = document.createElement('div');
+  holidayValue.className = 'leave-plan-detail-value';
+  holidayValue.textContent = holidayNames;
+  holidayDetail.appendChild(holidayLabel);
+  holidayDetail.appendChild(holidayValue);
+
+  const weekendDetail = document.createElement('div');
+  weekendDetail.className = 'leave-plan-detail';
+  const weekendLabel = document.createElement('div');
+  weekendLabel.className = 'leave-plan-detail-label';
+  weekendLabel.textContent = 'Weekends Covered';
+  const weekendValue = document.createElement('div');
+  weekendValue.className = 'leave-plan-detail-value';
+  weekendValue.textContent = `${weekendDays} days`;
+  weekendDetail.appendChild(weekendLabel);
+  weekendDetail.appendChild(weekendValue);
+
+  details.appendChild(leaveDetail);
+  details.appendChild(holidayDetail);
+  details.appendChild(weekendDetail);
+
+  const visualBar = document.createElement('div');
+  visualBar.className = 'visual-bar';
   const leavePercent = (leaveDays / opportunity.totalDays) * 100;
   const holidayPercent = (holidayDays / opportunity.totalDays) * 100;
   const weekendPercent = (weekendDays / opportunity.totalDays) * 100;
 
-  div.innerHTML = `
-    <div class="leave-plan-header">
-      <div class="leave-plan-dates">
-        <div class="leave-plan-date-range">${dateRange}</div>
-        <div class="leave-plan-duration">${duration}</div>
-      </div>
-      <div class="leave-plan-badges">
-        ${badge}
-      </div>
-    </div>
-    <div class="leave-plan-details">
-      <div class="leave-plan-detail">
-        <div class="leave-plan-detail-label">Leave Required</div>
-        <div class="leave-plan-detail-value"><strong>${opportunity.leaveDaysNeeded}</strong> days</div>
-      </div>
-      <div class="leave-plan-detail">
-        <div class="leave-plan-detail-label">Holidays Included</div>
-        <div class="leave-plan-detail-value">${holidayNames}</div>
-      </div>
-      <div class="leave-plan-detail">
-        <div class="leave-plan-detail-label">Weekends Covered</div>
-        <div class="leave-plan-detail-value">${weekendDays} days</div>
-      </div>
-    </div>
-    <div class="visual-bar">
-      ${leaveDays > 0 ? `<div class="visual-bar-segment visual-bar-segment--leave" style="flex: ${leavePercent}" title="Leave: ${leaveDays} days">${leaveDays}L</div>` : ''}
-      ${holidayDays > 0 ? `<div class="visual-bar-segment visual-bar-segment--holiday" style="flex: ${holidayPercent}" title="Holidays: ${holidayDays} days">${holidayDays}H</div>` : ''}
-      ${weekendDays > 0 ? `<div class="visual-bar-segment visual-bar-segment--weekend" style="flex: ${weekendPercent}" title="Weekends: ${weekendDays} days">${weekendDays}W</div>` : ''}
-    </div>
-  `;
+  if (leaveDays > 0) {
+    visualBar.appendChild(createVisualBarSegment(
+      'visual-bar-segment--leave', leavePercent, `Leave: ${leaveDays} days`, `${leaveDays}L`
+    ));
+  }
+  if (holidayDays > 0) {
+    visualBar.appendChild(createVisualBarSegment(
+      'visual-bar-segment--holiday', holidayPercent, `Holidays: ${holidayDays} days`, `${holidayDays}H`
+    ));
+  }
+  if (weekendDays > 0) {
+    visualBar.appendChild(createVisualBarSegment(
+      'visual-bar-segment--weekend', weekendPercent, `Weekends: ${weekendDays} days`, `${weekendDays}W`
+    ));
+  }
+
+  div.appendChild(header);
+  div.appendChild(details);
+  div.appendChild(visualBar);
+
+  const actions = document.createElement('div');
+  actions.className = 'leave-plan-actions';
+
+  const key = opportunityKey(opportunity);
+  const isLocked = lockedOpportunities.some(o => opportunityKey(o) === key);
+
+  const lockBtn = document.createElement('button');
+  lockBtn.type = 'button';
+  lockBtn.className = `btn btn--outline btn--sm leave-plan-action${isLocked ? ' active' : ''}`;
+  lockBtn.textContent = isLocked ? '🔒 Locked' : '🔓 Lock in plan';
+  lockBtn.setAttribute('aria-pressed', String(isLocked));
+  lockBtn.addEventListener('click', () => handleLockToggle(opportunity));
+
+  const excludeBtn = document.createElement('button');
+  excludeBtn.type = 'button';
+  excludeBtn.className = 'btn btn--outline btn--sm leave-plan-action';
+  excludeBtn.textContent = '✕ Exclude';
+  excludeBtn.setAttribute('aria-pressed', 'false');
+  excludeBtn.addEventListener('click', () => handleExcludeToggle(opportunity));
+
+  actions.appendChild(lockBtn);
+  actions.appendChild(excludeBtn);
+  div.appendChild(actions);
 
   return div;
 }
@@ -699,16 +589,30 @@ function createHolidayItem(holiday) {
   const month = monthNames[date.getMonth()];
   const dayName = dayNames[holiday.dayOfWeek];
 
-  div.innerHTML = `
-    <div class="holiday-date">
-      <div class="holiday-day">${day}</div>
-      <div class="holiday-month">${month}</div>
-    </div>
-    <div class="holiday-info">
-      <div class="holiday-name">${holiday.name}</div>
-      <div class="holiday-day-name">${dayName}</div>
-    </div>
-  `;
+  const dateBlock = document.createElement('div');
+  dateBlock.className = 'holiday-date';
+  const dayEl = document.createElement('div');
+  dayEl.className = 'holiday-day';
+  dayEl.textContent = String(day);
+  const monthEl = document.createElement('div');
+  monthEl.className = 'holiday-month';
+  monthEl.textContent = month;
+  dateBlock.appendChild(dayEl);
+  dateBlock.appendChild(monthEl);
+
+  const infoBlock = document.createElement('div');
+  infoBlock.className = 'holiday-info';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'holiday-name';
+  nameEl.textContent = holiday.name;
+  const dayNameEl = document.createElement('div');
+  dayNameEl.className = 'holiday-day-name';
+  dayNameEl.textContent = dayName;
+  infoBlock.appendChild(nameEl);
+  infoBlock.appendChild(dayNameEl);
+
+  div.appendChild(dateBlock);
+  div.appendChild(infoBlock);
 
   return div;
 }
@@ -716,6 +620,193 @@ function createHolidayItem(holiday) {
 function toggleHolidays() {
   holidaysContent.classList.toggle('hidden');
   holidaysToggle.classList.toggle('active');
+  const expanded = !holidaysContent.classList.contains('hidden');
+  holidaysToggle.setAttribute('aria-expanded', String(expanded));
+}
+
+function getStrategyLabel(strategy) {
+  const labels = {
+    balanced: 'Balanced',
+    long: 'Longest breaks',
+    trips: 'Most trips'
+  };
+  return labels[strategy] || 'Balanced';
+}
+
+function renderAlternativePlans() {
+  if (!alternativePlansEl || !alternativePlanTabs) return;
+
+  if (alternativePlans.length <= 1) {
+    alternativePlansEl.classList.add('hidden');
+    clearElement(alternativePlanTabs);
+    return;
+  }
+
+  alternativePlansEl.classList.remove('hidden');
+  clearElement(alternativePlanTabs);
+
+  alternativePlans.forEach((plan, index) => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = `alternative-plan-tab${index === selectedAlternativeIndex ? ' active' : ''}`;
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', String(index === selectedAlternativeIndex));
+    tab.textContent = `${getStrategyLabel(plan.strategy)} (${plan.totalDaysOff}d, ${plan.totalLeavesUsed} leaves)`;
+    tab.addEventListener('click', () => switchAlternativePlan(index));
+    alternativePlanTabs.appendChild(tab);
+  });
+}
+
+function switchAlternativePlan(index) {
+  if (!alternativePlans[index] || index === selectedAlternativeIndex) return;
+
+  selectedAlternativeIndex = index;
+  lockedOpportunities = [];
+  excludedKeys = new Set();
+
+  const alt = alternativePlans[index];
+  currentPlan = {
+    ...alt,
+    holidays: currentPlan.holidays,
+    period: currentPlan.period,
+    availableLeaves: currentPlan.availableLeaves,
+    preference: currentPlan.preference,
+    dataTruncated: currentPlan.dataTruncated,
+    lastAvailableDate: currentPlan.lastAvailableDate,
+    startDate: currentPlan.startDate,
+    endDate: currentPlan.endDate
+  };
+
+  displayResults(currentPlan);
+  showNotification(`Switched to ${getStrategyLabel(alt.strategy)} plan`, 'info');
+}
+
+function handleLockToggle(opportunity) {
+  const key = opportunityKey(opportunity);
+  const existing = lockedOpportunities.findIndex(o => opportunityKey(o) === key);
+
+  if (existing >= 0) {
+    lockedOpportunities.splice(existing, 1);
+    showNotification('Break unlocked — re-optimizing plan', 'info');
+  } else {
+    lockedOpportunities.push(opportunity);
+    showNotification('Break locked in — re-optimizing around it', 'success');
+  }
+
+  reoptimizePlan();
+}
+
+function handleExcludeToggle(opportunity) {
+  const key = opportunityKey(opportunity);
+
+  if (excludedKeys.has(key)) {
+    excludedKeys.delete(key);
+    showNotification('Break restored to pool', 'info');
+  } else {
+    excludedKeys.add(key);
+    lockedOpportunities = lockedOpportunities.filter(o => opportunityKey(o) !== key);
+    showNotification('Break excluded — finding alternatives', 'info');
+  }
+
+  reoptimizePlan();
+}
+
+function reoptimizePlan() {
+  if (!currentPlan || !allOpportunities.length) return;
+
+  const preference = currentPlan.preference || document.querySelector('input[name="preference"]:checked').value;
+  const leaveDays = currentPlan.availableLeaves;
+
+  const optimized = selectOptimalPlan(allOpportunities, leaveDays, preference, {
+    locked: lockedOpportunities,
+    excludedKeys: [...excludedKeys]
+  });
+
+  currentPlan = {
+    ...optimized,
+    holidays: currentPlan.holidays,
+    period: currentPlan.period,
+    availableLeaves: leaveDays,
+    preference,
+    dataTruncated: currentPlan.dataTruncated,
+    lastAvailableDate: currentPlan.lastAvailableDate,
+    startDate: currentPlan.startDate,
+    endDate: currentPlan.endDate
+  };
+
+  totalDaysOffEl.textContent = currentPlan.totalDaysOff;
+  leaveDaysUsedEl.textContent = currentPlan.totalLeavesUsed;
+  leaveRemainingEl.textContent = currentPlan.remainingLeaves;
+
+  sortAndDisplayResults(currentPlan, currentSortType);
+  renderCalendarView(currentPlan);
+  renderExcludedBreaks();
+}
+
+function renderCalendarView(plan) {
+  if (!calendarView || !plan?.startDate) return;
+
+  clearElement(calendarView);
+  const months = buildCalendarData(
+    plan.startDate,
+    plan.endDate,
+    plan.holidays,
+    plan.selectedOpportunities,
+    companySettings.weekendPolicy
+  );
+
+  months.forEach(monthData => {
+    const monthEl = document.createElement('div');
+    monthEl.className = 'calendar-month';
+
+    const title = document.createElement('h4');
+    title.className = 'calendar-month-title';
+    title.textContent = `${monthData.monthName} ${monthData.year}`;
+    monthEl.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'calendar-grid';
+    grid.setAttribute('role', 'grid');
+    grid.setAttribute('aria-label', `${monthData.monthName} ${monthData.year}`);
+
+    monthData.dayHeaders.forEach(header => {
+      const th = document.createElement('div');
+      th.className = 'calendar-day-header';
+      th.textContent = header;
+      th.setAttribute('role', 'columnheader');
+      grid.appendChild(th);
+    });
+
+    monthData.cells.forEach(cell => {
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day';
+      dayEl.setAttribute('role', 'gridcell');
+
+      if (!cell.inMonth) dayEl.classList.add('calendar-day--other-month');
+      if (cell.isWeekend) dayEl.classList.add('calendar-day--weekend');
+      if (cell.isHoliday) dayEl.classList.add('calendar-day--holiday');
+      if (cell.isLeave) dayEl.classList.add('calendar-day--leave');
+      if (cell.isPlanned && !cell.isLeave) dayEl.classList.add('calendar-day--planned');
+
+      const num = document.createElement('span');
+      num.className = 'calendar-day-num';
+      num.textContent = String(cell.day);
+      dayEl.appendChild(num);
+
+      if (cell.holidayName && cell.inMonth) {
+        dayEl.title = cell.holidayName;
+        const dot = document.createElement('span');
+        dot.className = 'calendar-day-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        dayEl.appendChild(dot);
+      }
+
+      grid.appendChild(dayEl);
+    });
+
+    monthEl.appendChild(grid);
+    calendarView.appendChild(monthEl);
+  });
 }
 
 function handleReset() {
@@ -723,6 +814,11 @@ function handleReset() {
   resultsSection.classList.add('hidden');
   loadingSkeleton.classList.add('hidden');
   currentPlan = null;
+  allOpportunities = [];
+  lockedOpportunities = [];
+  excludedKeys = new Set();
+  alternativePlans = [];
+  selectedAlternativeIndex = 0;
   currentSortType = userPreferences.sortPreference || 'date';
   hideLoadingButton();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -731,6 +827,10 @@ function handleReset() {
 
 // Initialize App
 function initializeApp() {
+  populatePeriodDropdown();
+  loadCompanySettings();
+  applyURLParams();
+
   // Load saved theme preference or check system preference
   const savedTheme = getSavedPreference('theme');
   if (savedTheme) {
@@ -818,15 +918,181 @@ function applyTheme(theme) {
   }
 }
 
-// In-memory preference storage (localStorage not available in sandbox)
+const STORAGE_PREFIX = 'smartleaves_';
 const inMemoryStorage = {};
 
 function savePreference(key, value) {
-  inMemoryStorage[key] = value;
+  userPreferences[key] = value;
+  try {
+    localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(value));
+  } catch (e) {
+    inMemoryStorage[key] = value;
+  }
 }
 
 function getSavedPreference(key) {
+  try {
+    const stored = localStorage.getItem(`${STORAGE_PREFIX}${key}`);
+    if (stored !== null) return JSON.parse(stored);
+  } catch (e) {
+    // fall through to in-memory fallback
+  }
   return inMemoryStorage[key];
+}
+
+function loadCompanySettings() {
+  const saved = getSavedPreference('companySettings');
+  if (saved) {
+    companySettings = {
+      weekendPolicy: saved.weekendPolicy || 'standard',
+      addedHolidays: saved.addedHolidays || [],
+      excludedDates: saved.excludedDates || []
+    };
+  }
+  if (weekendPolicySelect) {
+    weekendPolicySelect.value = companySettings.weekendPolicy;
+  }
+  renderCustomHolidayList();
+}
+
+function saveCompanySettings() {
+  savePreference('companySettings', companySettings);
+}
+
+function toggleCompanySettings() {
+  companySettingsPanel.classList.toggle('hidden');
+  companySettingsToggle.classList.toggle('active');
+  const expanded = !companySettingsPanel.classList.contains('hidden');
+  companySettingsToggle.setAttribute('aria-expanded', String(expanded));
+  if (expanded) {
+    populateExcludedHolidaysList();
+  }
+}
+
+function handleWeekendPolicyChange() {
+  companySettings.weekendPolicy = weekendPolicySelect.value;
+  saveCompanySettings();
+}
+
+function handleAddCustomHoliday() {
+  const date = customHolidayDate.value;
+  const name = customHolidayName.value.trim();
+
+  if (!date) {
+    showNotification('Please select a date for the custom holiday', 'error');
+    return;
+  }
+  if (!name) {
+    showNotification('Please enter a holiday name', 'error');
+    return;
+  }
+  if (companySettings.addedHolidays.some(h => h.date === date)) {
+    showNotification('This date is already in your custom holidays', 'warning');
+    return;
+  }
+
+  companySettings.addedHolidays.push({ date, name });
+  companySettings.addedHolidays.sort((a, b) => a.date.localeCompare(b.date));
+  saveCompanySettings();
+  renderCustomHolidayList();
+  customHolidayDate.value = '';
+  customHolidayName.value = '';
+  showNotification(`Added "${name}" to your company holidays`, 'success');
+}
+
+function handleRemoveCustomHoliday(date) {
+  companySettings.addedHolidays = companySettings.addedHolidays.filter(h => h.date !== date);
+  saveCompanySettings();
+  renderCustomHolidayList();
+}
+
+function renderCustomHolidayList() {
+  if (!customHolidayList) return;
+  clearElement(customHolidayList);
+
+  if (companySettings.addedHolidays.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'form-text';
+    empty.textContent = 'No custom holidays added yet';
+    customHolidayList.appendChild(empty);
+    return;
+  }
+
+  companySettings.addedHolidays.forEach(holiday => {
+    const li = document.createElement('li');
+    li.className = 'custom-holiday-item';
+
+    const info = document.createElement('span');
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'custom-holiday-item-name';
+    nameSpan.textContent = holiday.name;
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'custom-holiday-item-date';
+    dateSpan.textContent = formatDate(parseDate(holiday.date));
+    info.appendChild(nameSpan);
+    info.appendChild(dateSpan);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'custom-holiday-remove';
+    removeBtn.textContent = 'Remove';
+    removeBtn.addEventListener('click', () => handleRemoveCustomHoliday(holiday.date));
+
+    li.appendChild(info);
+    li.appendChild(removeBtn);
+    customHolidayList.appendChild(li);
+  });
+}
+
+function populateExcludedHolidaysList() {
+  if (!excludedHolidaysList) return;
+  clearElement(excludedHolidaysList);
+
+  const period = document.getElementById('planningPeriod')?.value || String(new Date().getFullYear());
+  const { holidays: baseHolidays } = getHolidaysForPeriod(period);
+
+  baseHolidays.forEach(holiday => {
+    const label = document.createElement('label');
+    label.className = 'excluded-holiday-item';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = !companySettings.excludedDates.includes(holiday.date);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        companySettings.excludedDates = companySettings.excludedDates.filter(d => d !== holiday.date);
+      } else {
+        if (!companySettings.excludedDates.includes(holiday.date)) {
+          companySettings.excludedDates.push(holiday.date);
+        }
+      }
+      saveCompanySettings();
+    });
+
+    const text = document.createElement('span');
+    text.textContent = `${holiday.name} (${formatDate(parseDate(holiday.date))})`;
+
+    label.appendChild(checkbox);
+    label.appendChild(text);
+    excludedHolidaysList.appendChild(label);
+  });
+}
+
+function applyURLParams() {
+  const params = parseShareURL(window.location.search);
+  if (!params) return;
+
+  document.getElementById('leaveDays').value = params.leaveDays;
+  if (document.getElementById('planningPeriod').querySelector(`option[value="${params.planningPeriod}"]`)) {
+    document.getElementById('planningPeriod').value = params.planningPeriod;
+  }
+  const prefRadio = document.querySelector(`input[name="preference"][value="${params.preference}"]`);
+  if (prefRadio) prefRadio.checked = true;
+  if (params.weekendPolicy && weekendPolicySelect) {
+    companySettings.weekendPolicy = params.weekendPolicy;
+    weekendPolicySelect.value = params.weekendPolicy;
+    saveCompanySettings();
+  }
 }
 
 // Loading States
@@ -888,7 +1154,10 @@ function setupScrollAnimations() {
 
 // Notification System
 function showNotification(message, type = 'info') {
-  // Create notification element
+  if (ariaLiveRegion) {
+    ariaLiveRegion.textContent = message;
+  }
+
   const notification = document.createElement('div');
   notification.className = `notification notification--${type}`;
   notification.textContent = message;
@@ -926,9 +1195,20 @@ function showNotification(message, type = 'info') {
   setTimeout(() => {
     notification.style.animation = 'slideOutRight 0.3s ease';
     setTimeout(() => {
-      document.body.removeChild(notification);
+      if (notification.isConnected) {
+        notification.remove();
+      }
     }, 300);
   }, 3000);
+}
+
+function getFormSettings() {
+  return {
+    leaveDays: parseInt(document.getElementById('leaveDays').value, 10),
+    planningPeriod: document.getElementById('planningPeriod').value,
+    preference: document.querySelector('input[name="preference"]:checked').value,
+    weekendPolicy: companySettings.weekendPolicy
+  };
 }
 
 function generatePlanText() {
@@ -956,33 +1236,118 @@ function generatePlanText() {
   return text;
 }
 
-function handleExport() {
-  const text = generatePlanText();
-  modalTitle.textContent = 'Export Your Holiday Plan';
-  modalText.value = text;
+function openModal() {
+  modalPreviousFocus = document.activeElement;
   modal.classList.remove('hidden');
-}
 
-function handleShare() {
-  const text = generatePlanText();
-  modalTitle.textContent = 'Share Your Holiday Plan';
-  modalText.value = text;
-  modal.classList.remove('hidden');
+  const focusable = modal.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  if (focusable.length) focusable[0].focus();
 }
 
 function closeModal() {
   modal.classList.add('hidden');
+  if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') {
+    modalPreviousFocus.focus();
+  }
+  modalPreviousFocus = null;
 }
 
-function copyToClipboard() {
-  modalText.select();
-  document.execCommand('copy');
-  
-  const originalText = modalCopyBtn.textContent;
-  modalCopyBtn.textContent = '✅ Copied!';
-  setTimeout(() => {
-    modalCopyBtn.textContent = originalText;
-  }, 2000);
+function trapModalFocus(e) {
+  if (modal.classList.contains('hidden') || e.key !== 'Tab') return;
+
+  const focusable = [...modal.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )].filter(el => !el.disabled);
+
+  if (focusable.length === 0) return;
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+function handleExport() {
+  const text = generatePlanText();
+  modalTitle.textContent = 'Export Your Holiday Plan';
+  modalText.value = text;
+  openModal();
+}
+
+function handleDownloadICS() {
+  if (!currentPlan) {
+    showNotification('Generate a plan first before downloading calendar', 'warning');
+    return;
+  }
+  downloadICS(currentPlan);
+  showNotification('Calendar file downloaded — import into Google/Outlook/Apple Calendar', 'success');
+}
+
+async function handleWebShare() {
+  if (!currentPlan) {
+    showNotification('Generate a plan first before sharing', 'warning');
+    return;
+  }
+
+  const settings = getFormSettings();
+  const url = buildShareURL(settings);
+  const text = generatePlanText();
+  const icsContent = generateICS(currentPlan);
+  const icsBlob = new Blob([icsContent], { type: 'text/calendar' });
+
+  try {
+    const shared = await sharePlan({
+      title: 'My Smart Leaves Plan',
+      text,
+      url,
+      icsBlob
+    });
+    if (shared) {
+      showNotification('Plan shared successfully!', 'success');
+      closeModal();
+    } else {
+      const shareText = `${text}\n\n🔗 ${url}`;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        showNotification('Share link copied to clipboard', 'success');
+      } else {
+        modalTitle.textContent = 'Share Your Holiday Plan';
+        modalText.value = shareText;
+        openModal();
+      }
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      showNotification('Could not share — try copy or download instead', 'warning');
+    }
+  }
+}
+
+async function copyToClipboard() {
+  const text = modalText.value;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      modalText.select();
+      document.execCommand('copy');
+    }
+    const originalText = modalCopyBtn.textContent;
+    modalCopyBtn.textContent = '✅ Copied!';
+    setTimeout(() => {
+      modalCopyBtn.textContent = originalText;
+    }, 2000);
+  } catch {
+    showNotification('Could not copy — please select and copy manually', 'error');
+  }
 }
 
 // Close modal when clicking outside
@@ -994,21 +1359,15 @@ modal.addEventListener('click', (e) => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  // Escape key to close modal
   if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
     closeModal();
   }
-  
-  // Ctrl/Cmd + K to focus on form
+
+  trapModalFocus(e);
+
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
     e.preventDefault();
     document.getElementById('leaveDays').focus();
-  }
-  
-  // Ctrl/Cmd + D to toggle dark mode
-  if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-    e.preventDefault();
-    toggleTheme();
   }
 });
 
@@ -1038,101 +1397,3 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
-
-// Test Runner Functions (for demonstration)
-function runTestSuite() {
-  console.log('🧪 Running Smart Holiday Planner Test Suite...');
-  
-  const tests = [
-    testHolidayCalculation(),
-    testWeekendDetection(),
-    testLongWeekendIdentification(),
-    testLeaveOptimization(),
-    testEdgeCases()
-  ];
-  
-  const passed = tests.filter(t => t).length;
-  const total = tests.length;
-  
-  console.log(`✅ Tests passed: ${passed}/${total}`);
-  return passed === total;
-}
-
-function testHolidayCalculation() {
-  try {
-    const { holidays } = getHolidaysForPeriod('2026');
-    console.assert(holidays.length > 0, 'Should have holidays for 2026');
-    console.assert(holidays[0].name, 'Holiday should have a name');
-    console.assert(holidays[0].date, 'Holiday should have a date');
-    console.log('✓ Holiday calculation test passed');
-    return true;
-  } catch (error) {
-    console.error('✗ Holiday calculation test failed:', error);
-    return false;
-  }
-}
-
-function testWeekendDetection() {
-  try {
-    const saturday = new Date(2026, 0, 3); // Jan 3, 2026 is Saturday
-    const monday = new Date(2026, 0, 5); // Jan 5, 2026 is Monday
-    console.assert(isWeekend(saturday), 'Saturday should be weekend');
-    console.assert(!isWeekend(monday), 'Monday should not be weekend');
-    console.log('✓ Weekend detection test passed');
-    return true;
-  } catch (error) {
-    console.error('✗ Weekend detection test failed:', error);
-    return false;
-  }
-}
-
-function testLongWeekendIdentification() {
-  try {
-    const { holidays } = getHolidaysForPeriod('2026');
-    const opportunities = calculateLeaveOpportunities(holidays, 20, 'balanced');
-    console.assert(opportunities.length > 0, 'Should find opportunities');
-    console.log('✓ Long weekend identification test passed');
-    return true;
-  } catch (error) {
-    console.error('✗ Long weekend identification test failed:', error);
-    return false;
-  }
-}
-
-function testLeaveOptimization() {
-  try {
-    const { holidays } = getHolidaysForPeriod('2026');
-    const opportunities = calculateLeaveOpportunities(holidays, 10, 'balanced');
-    const plan = selectOptimalPlan(opportunities, 10, 'balanced');
-    console.assert(plan.totalLeavesUsed <= 10, 'Should not exceed available leaves');
-    console.assert(plan.totalDaysOff >= plan.totalLeavesUsed, 'Should optimize days off');
-    console.log('✓ Leave optimization test passed');
-    return true;
-  } catch (error) {
-    console.error('✗ Leave optimization test failed:', error);
-    return false;
-  }
-}
-
-function testEdgeCases() {
-  try {
-    const { holidays } = getHolidaysForPeriod('2026');
-    const opportunities = calculateLeaveOpportunities(holidays, 0, 'balanced');
-    const plan = selectOptimalPlan(opportunities, 0, 'balanced');
-    console.assert(plan.totalLeavesUsed === 0, 'Should handle 0 leaves');
-    console.log('✓ Edge cases test passed');
-    return true;
-  } catch (error) {
-    console.error('✗ Edge cases test failed:', error);
-    return false;
-  }
-}
-
-// Run tests on load (in development)
-if (window.location.search.includes('test=true')) {
-  setTimeout(() => {
-    console.log('\n' + '='.repeat(50));
-    runTestSuite();
-    console.log('='.repeat(50) + '\n');
-  }, 1000);
-}
