@@ -5,14 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Leaves Planner - Maximize Your Leaves</title>
     
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HB2QNZN7D0"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-HB2QNZN7D0');
-    </script>
+    <!-- Analytics loads only after consent (see lib/consent.js) -->
+    <script type="module" src="lib/consent.js"></script>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏖️</text></svg>">
     <link rel="stylesheet" href="style.css">
@@ -299,6 +293,17 @@
     </main>
 
     <!-- Footer -->
+    <!-- Analytics consent banner (S4) — hidden until a choice is needed -->
+    <div class="consent-banner hidden" id="consentBanner" role="dialog" aria-label="Analytics consent" aria-live="polite">
+        <p class="consent-banner__text">
+            SmartLeaves uses Google Analytics to understand how the tool is used. Analytics stays off until you allow it.
+        </p>
+        <div class="consent-banner__actions">
+            <button type="button" class="btn btn--outline btn--sm" id="consentDeclineBtn">Decline</button>
+            <button type="button" class="btn btn--primary btn--sm" id="consentAcceptBtn">Allow analytics</button>
+        </div>
+    </div>
+
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
