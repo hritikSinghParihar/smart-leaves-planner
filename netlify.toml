@@ -1,3 +1,12 @@
 # Static site — no build step. Publish from repo root.
 [build]
   publish = "."
+
+# Content-Security-Policy (S1)
+# Scripts limited to self + Google Analytics loader (no 'unsafe-inline' for
+# scripts, so injected/inline script is blocked). GA endpoints allowed for
+# img/connect. Styles allow 'unsafe-inline' (app sets element styles).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://www.googletagmanager.com; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com; img-src 'self' data: https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com; style-src 'self' 'unsafe-inline'; font-src 'self' https://r2cdn.perplexity.ai"
